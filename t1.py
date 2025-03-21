@@ -1,11 +1,17 @@
-import os
-import random
-import time
+from os import system, name
+from random import randint
+from time import sleep
 
-VACIO = "▢"
-SNAKE = "◉"
-OBJETIVO = "✦"
-GUARDIA = "▪"
+VACIO = "X"
+SNAKE = "S"
+OBJETIVO = "*"
+GUARDIA = "!"
+
+COLOR_GRIS = "\033[90m"
+COLOR_AMARILLO = "\033[33m"
+COLOR_ROJO = "\033[31m"
+COLOR_VERDE = "\033[32m"
+COLOR_POR_DEFECTO = "\033[0m"
 
 ALTO = 11
 
@@ -26,7 +32,7 @@ class BinarySnake:
             self.spawnear(GUARDIA)
         
         self.spawnear(OBJETIVO)
-        self.objetivo = random.randint(0,(20 if self.base == 2 else 100 if self.base == 8 else 500))
+        self.objetivo = randint(0,(20 if self.base == 2 else 100 if self.base == 8 else 500))
     
     def obtenerBaseInt(self):
         return self.base
@@ -63,8 +69,8 @@ class BinarySnake:
     def spawnear(self,c:str):
         aux = True
         while aux:
-            x = random.randint(1,self.largo)-1
-            y = random.randint(1,self.alto)-1
+            x = randint(1,self.largo)-1
+            y = randint(1,self.alto)-1
             if self.obtenerCasilla(x,y) == VACIO:
                 self.actualizarCasilla(x,y,c)
                 aux = False
@@ -78,8 +84,16 @@ class BinarySnake:
     def mostrarMapa(self):
         for y in self.mapa:
             for x in y:
+                if x == SNAKE:
+                    print(f'{COLOR_POR_DEFECTO}',end="")
+                elif x == GUARDIA:
+                    print(f'{COLOR_ROJO}',end="")
+                elif x == OBJETIVO:
+                    print(f'{COLOR_AMARILLO}',end="")
+                else:
+                    print(f'{COLOR_GRIS}',end="")
                 print(x,end="")
-            print()
+            print(f'{COLOR_POR_DEFECTO}')
 
 def calcularBase(num:int,base:int):
     res = str()
@@ -109,39 +123,61 @@ def decimalDigito(dig:str):
     return int(digitos.get(dig,dig))
 
 def clear():
-    os.system('cls' if os.name == 'nt' else 'clear')
+    system('cls' if name == 'nt' else 'clear')
+
+
+
+
 
 clear()
+print(f'{COLOR_VERDE}BINARY SNAKE{COLOR_POR_DEFECTO}')
+sleep(1)
 
-largo = int(input("Ingresar largo del pasillo: "))
-cantidadGuardias = int(input("Ingresar cantidad de guardias: "))
+while True:
+    try:
+        largo = int(input("Ingresar largo del pasillo: "))
+    except:
+        print("Ingresa un numero...\n")
+        continue
+    if 0 < largo:
+        break
+    print("Ingresa un numero mayor a 0...\n")
+
+max = largo*ALTO-2 # se resta 2 para no contar la casilla de Snake y el Objetivo
+while True:
+    try:
+        cantidadGuardias = int(input(f'Ingresar cantidad de guardias [0-{max}]: '))
+    except:
+        print("Ingresa un numero...\n")
+        continue
+    if 0 <= cantidadGuardias <= max:
+        break
+    print("Ingresa un numero dentro del rango...\n")
 
 BS = BinarySnake(largo=largo,alto=ALTO,guardias=cantidadGuardias)
 
-movimiento = 0
 while True:
     clear()
     
-    movimiento += 1
-    print(f'[{BS.largo}x{BS.alto}] - Movimiento {movimiento}')
+    print(f'[BASE{BS.obtenerBaseInt()}][{BS.largo}x{BS.alto}]')
     
     BS.mostrarMapa()
-    accion = input("Ingresa una acción:\nw: ↑\na: ←\ns: ↓\nd: →\n-1: Salir\nAcción: ")
+    accion = input("Ingresa una acción:\nw: ↑\na: ←\ns: ↓\nd: →\n-1: Salir\nAcción: ").lower()
     
     if accion == "-1":
         clear()
         break
-    if accion not in "wasd":
+    if accion not in ["w","a","s","d"]:
         print("Ingresa una acción valida...")
-        time.sleep(1)
+        sleep(1)
         continue
     
     res = int()
     while True:
-        distancia = calcularDecimal(input(f'Ingresa la distancia a recorrer en formato {BS.obtenerBaseStr()}: '),BS.base)
+        distancia = calcularDecimal(input(f'Ingresa la distancia a recorrer en formato {BS.obtenerBaseStr()}: ').upper(),BS.base)
         if distancia == -1:
             print(f'Ingresa un numero valido en formato {BS.obtenerBaseStr()}...')
-            time.sleep(1)
+            sleep(1)
             continue
         
         direccion = {"w":(0,-distancia),"s":(0,distancia),"d":(distancia,0),"a":(-distancia,0)}
@@ -149,35 +185,52 @@ while True:
         
         if res == 3: #FUERA DE RANGO
             print(f'Ingresa una distancia sin salirte del mapa...')
-            time.sleep(1)
+            sleep(1)
             continue
-        
         break
-    
     clear()
     
-    if res == 1:
-        print("Te atrapo un guardia. Perdiste! :(")
+    if res == 1: # GUARDIA
+        print(f'{COLOR_ROJO}Te atrapo un guardia. Perdiste!{COLOR_POR_DEFECTO} :(')
         break
-    if res == 2:
+    
+    if res == 2: # OBJETIVO
         print("Haz llegado al objetivo! :O")
         while True:
-            print("Iniciado hackeo")
+            print(f'{COLOR_VERDE}',end="")
+            print("Iniciado hackeo...")
             
-            time.sleep(1)
+            sleep(1)
             print("...")
-            time.sleep(1)
-            
-            num = int(input(f'[{BS.obtenerObjetivoConvertido()}] → Necesita ser convertido a Decimal para continuar: '))
-            
-            time.sleep(1)
+            sleep(1)
+            print("En proceso...")
+            sleep(1)
             print("...")
-            time.sleep(1)
+            sleep(1)
+            
+            while True:
+                try:
+                    num = int(input(f'{COLOR_ROJO}[{BS.obtenerObjetivoConvertido()}] → Necesita ser convertido de {BS.obtenerBaseStr()} a Decimal para continuar:{COLOR_POR_DEFECTO} '))
+                except:
+                    print(f'{COLOR_ROJO}Ingresa un numero...')
+                    continue
+                finally:
+                    break
+            
+            sleep(1)
+            print(f'{COLOR_VERDE}Reanudando')
+            sleep(2)
+            print("...")
+            sleep(1)
+            print("Ya casi...")
+            sleep(1)
+            print("...")
+            sleep(2)
             
             if num != BS.obtenerObjetivo():
-                print("Decimal incorrecto, hackeo interrumpido. Perdiste :(")
+                print(f'{COLOR_ROJO}Decimal incorrecto, hackeo interrumpido. Perdiste!{COLOR_POR_DEFECTO} :(')
                 break
             
-            print("Hackeo completado. Ganaste :D")
+            print(f'Hackeo completado. {COLOR_AMARILLO}Ganaste {COLOR_POR_DEFECTO}:D')
             break
         break

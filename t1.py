@@ -38,33 +38,40 @@ class BinarySnake:
         return self.base
     def obtenerBaseStr(self):
         return "Binario" if self.base == 2 else "Octal" if self.base == 8 else "Hexadecimal"
+    def obtenerBasePrefix(self):
+        return "0b" if self.base == 2 else "0o" if self.base == 8 else "0x"
     
     def obtenerObjetivo(self):
         return self.objetivo
     def obtenerObjetivoConvertido(self):
         return calcularBase(self.objetivo,self.base)
-
     
     def moverSnake(self,x:int,y:int):
-        x = x + self.snakeX
-        y = y + self.snakeY
+        currX = self.snakeX
+        currY = self.snakeY
         
-        if x < 0 or x >= self.largo or y < 0 or y >= self.alto:
-            return 3
+        finalX = max([0,min([currX+x,self.largo-1])])
+        finalY = max([0,min([currY+y,self.alto-1])])
         
-        casilla = self.obtenerCasilla(x,y)
-        if casilla == GUARDIA:
-            return 1
-        if casilla == OBJETIVO:
-            return 2
+        stepX = 0 if x == 0 else -1 if x < 0 else 1
+        stepY = 0 if y == 0 else -1 if y < 0 else 1
         
-        self.actualizarCasilla(self.snakeX,self.snakeY,VACIO) 
+        while currX != finalX:
+            currX += stepX
+            currCasilla = self.obtenerCasilla(currX,currY)
+            self.actualizarSnake(currX,currY)
+            if currCasilla in (GUARDIA, OBJETIVO):
+                return 1 if currCasilla == GUARDIA else 2
         
-        self.snakeX = x
-        self.snakeY = y
-        self.actualizarCasilla(self.snakeX,self.snakeY,SNAKE) 
-        
+        while currY != finalY:
+            currY += stepY
+            currCasilla = self.obtenerCasilla(currX,currY)
+            self.actualizarSnake(currX,currY)
+            if currCasilla in (GUARDIA, OBJETIVO):
+                return 1 if currCasilla == GUARDIA else 2
+            
         return 0
+        
         
     def spawnear(self,c:str):
         aux = True
@@ -80,12 +87,25 @@ class BinarySnake:
     
     def actualizarCasilla(self,x:int,y:int,c:str):
         self.mapa[y][x] = c
+        
+    def actualizarSnake(self,x:int,y:int):
+        self.actualizarCasilla(self.snakeX,self.snakeY,VACIO) 
+        self.snakeX = x
+        self.snakeY = y
+        self.actualizarCasilla(self.snakeX,self.snakeY,SNAKE) 
+        
     
-    def mostrarMapa(self):
+    def mostrarMapa(self,condition:int=0):
+        print(f'[BASE{self.obtenerBaseInt()}][{self.largo}x{self.alto}]')
         for y in self.mapa:
             for x in y:
                 if x == SNAKE:
-                    print(f'{COLOR_POR_DEFECTO}',end="")
+                    if (condition == 0):                        # JUGANDO
+                        print(f'{COLOR_POR_DEFECTO}',end="")
+                    elif (condition == 1):                      # PERDISTE
+                        print(f'{COLOR_ROJO}',end="")
+                    else:                                       # OBJETIVO
+                        print(f'{COLOR_AMARILLO}',end="")
                 elif x == GUARDIA:
                     print(f'{COLOR_ROJO}',end="")
                 elif x == OBJETIVO:
@@ -127,7 +147,7 @@ def clear():
 
 
 
-
+# EMPIEZA EL JUEGO AQUI
 
 clear()
 print(f'{COLOR_VERDE}BINARY SNAKE{COLOR_POR_DEFECTO}')
@@ -143,14 +163,14 @@ while True:
         break
     print("Ingresa un numero mayor a 0...\n")
 
-max = largo*ALTO-2 # se resta 2 para no contar la casilla de Snake y el Objetivo
+max_ = largo*ALTO-2 # se resta 2 para no contar la casilla de Snake y el Objetivo
 while True:
     try:
-        cantidadGuardias = int(input(f'Ingresar cantidad de guardias [0-{max}]: '))
+        cantidadGuardias = int(input(f'Ingresar cantidad de guardias [0-{max_}]: '))
     except:
         print("Ingresa un numero...\n")
         continue
-    if 0 <= cantidadGuardias <= max:
+    if 0 <= cantidadGuardias <= max_:
         break
     print("Ingresa un numero dentro del rango...\n")
 
@@ -158,8 +178,6 @@ BS = BinarySnake(largo=largo,alto=ALTO,guardias=cantidadGuardias)
 
 while True:
     clear()
-    
-    print(f'[BASE{BS.obtenerBaseInt()}][{BS.largo}x{BS.alto}]')
     
     BS.mostrarMapa()
     accion = input("Ingresa una acción:\nw: ↑\na: ←\ns: ↓\nd: →\n-1: Salir\nAcción: ").lower()
@@ -183,54 +201,38 @@ while True:
         direccion = {"w":(0,-distancia),"s":(0,distancia),"d":(distancia,0),"a":(-distancia,0)}
         res = BS.moverSnake(x=direccion[accion][0],y=direccion[accion][1])
         
-        if res == 3: #FUERA DE RANGO
-            print(f'Ingresa una distancia sin salirte del mapa...')
-            sleep(1)
-            continue
         break
     clear()
     
     if res == 1: # GUARDIA
+        BS.mostrarMapa(1)
         print(f'{COLOR_ROJO}Te atrapo un guardia. Perdiste!{COLOR_POR_DEFECTO} :(')
         break
     
     if res == 2: # OBJETIVO
+        BS.mostrarMapa(2)
         print("Haz llegado al objetivo! :O")
+        print(f'{COLOR_VERDE}',end="")
+        print("Iniciado hackeo...")
+        
+        sleep(1)
+        
         while True:
-            print(f'{COLOR_VERDE}',end="")
-            print("Iniciado hackeo...")
-            
-            sleep(1)
-            print("...")
-            sleep(1)
-            print("En proceso...")
-            sleep(1)
-            print("...")
-            sleep(1)
-            
-            while True:
-                try:
-                    num = int(input(f'{COLOR_ROJO}[{BS.obtenerObjetivoConvertido()}] → Necesita ser convertido de {BS.obtenerBaseStr()} a Decimal para continuar:{COLOR_POR_DEFECTO} '))
-                except:
-                    print(f'{COLOR_ROJO}Ingresa un numero...')
-                    continue
-                finally:
-                    break
-            
-            sleep(1)
-            print(f'{COLOR_VERDE}Reanudando')
-            sleep(2)
-            print("...")
-            sleep(1)
-            print("Ya casi...")
-            sleep(1)
-            print("...")
-            sleep(2)
-            
-            if num != BS.obtenerObjetivo():
-                print(f'{COLOR_ROJO}Decimal incorrecto, hackeo interrumpido. Perdiste!{COLOR_POR_DEFECTO} :(')
+            try:
+                num = int(input(f'{COLOR_ROJO}[{BS.obtenerBasePrefix()}{BS.obtenerObjetivoConvertido()}] → Necesita ser convertido de {BS.obtenerBaseStr()} a Decimal para continuar:{COLOR_POR_DEFECTO} '))
+            except:
+                print(f'{COLOR_ROJO}Ingresa un numero...')
+                continue
+            finally:
                 break
-            
-            print(f'Hackeo completado. {COLOR_AMARILLO}Ganaste {COLOR_POR_DEFECTO}:D')
+        
+        sleep(1)
+        print(f'{COLOR_VERDE}...')
+        sleep(2)
+        
+        if num != BS.obtenerObjetivo():
+            print(f'{COLOR_ROJO}Decimal incorrecto, hackeo interrumpido. Perdiste!{COLOR_POR_DEFECTO} :(')
             break
+        
+        print(f'Hackeo completado. {COLOR_AMARILLO}Ganaste {COLOR_POR_DEFECTO}:D')
         break

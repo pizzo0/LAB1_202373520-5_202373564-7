@@ -13,11 +13,14 @@ Conversión de bases: El jugador ingresa distancias en binario, octal o hexadeci
 Movimiento de la serpiente: La serpiente se mueve en pasos verificando si alcanza el objetivo (gana), choca con un guardia (pierde) o continúa.
 
 Lógica de hackeo: Al llegar al objetivo, el jugador debe convertir correctamente un número de la base del tablero a decimal para ganar.
+
 Para ejecutar el codigo, usar el comando:
 ```
 python t1.py
 ```
+
 ó
+
 ```
 python3 t1.py
 ```
